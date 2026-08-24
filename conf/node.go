@@ -24,13 +24,16 @@ type rawNodeConfig struct {
 }
 
 type ApiConfig struct {
-	APIHost      string `json:"ApiHost"`
-	APISendIP    string `json:"ApiSendIP"`
-	NodeID       int    `json:"NodeID"`
-	Key          string `json:"ApiKey"`
-	NodeType     string `json:"NodeType"`
-	Timeout      int    `json:"Timeout"`
-	RuleListPath string `json:"RuleListPath"`
+	APIHost       string `json:"ApiHost"`
+	APISendIP     string `json:"ApiSendIP"`
+	NodeID        int    `json:"NodeID"`
+	Key           string `json:"ApiKey"`
+	NodeType      string `json:"NodeType"`
+	Timeout       int    `json:"Timeout"`
+	RuleListPath  string `json:"RuleListPath"`
+	// TlsMaxVersion limits the panel HTTPS client. Empty or "1.3" uses Go
+	// defaults. Set "1.2" when the path to the panel drops TLS 1.3 ClientHello.
+	TlsMaxVersion string `json:"TlsMaxVersion"`
 }
 
 func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {

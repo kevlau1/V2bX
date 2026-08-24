@@ -1,6 +1,7 @@
 package panel
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -54,6 +55,12 @@ func New(c *conf.ApiConfig) (*Client, error) {
 		}
 	})
 	client.SetBaseURL(c.APIHost)
+	if maxVer, err := parseTLSMaxVersion(c.TlsMaxVersion); err != nil {
+		return nil, err
+	} else if maxVer != 0 {
+		client.SetTLSClientConfig(&tls.Config{MaxVersion: maxVer})
+		logrus.Infof("panel HTTPS client forcing TLS 1.2, host=%s node_id=%d", c.APIHost, c.NodeID)
+	}
 	// Check node type
 	c.NodeType = strings.ToLower(c.NodeType)
 	switch c.NodeType {
@@ -87,4 +94,15 @@ func New(c *conf.ApiConfig) (*Client, error) {
 		UserList:  &UserListBody{},
 		AliveMap:  &AliveMap{},
 	}, nil
+}
+
+func parseTLSMaxVersion(v string) (uint16, error) {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "", "1.3", "tls1.3", "tlsv1.3":
+		return 0, nil
+	case "1.2", "tls1.2", "tlsv1.2":
+		return tls.VersionTLS12, nil
+	default:
+		return 0, fmt.Errorf("unsupported TlsMaxVersion %q (use 1.2 or 1.3)", v)
+	}
 }
