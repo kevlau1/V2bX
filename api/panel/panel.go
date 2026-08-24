@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -58,8 +59,17 @@ func New(c *conf.ApiConfig) (*Client, error) {
 	if maxVer, err := parseTLSMaxVersion(c.TlsMaxVersion); err != nil {
 		return nil, err
 	} else if maxVer != 0 {
-		client.SetTLSClientConfig(&tls.Config{MaxVersion: maxVer})
-		logrus.Infof("panel HTTPS client forcing TLS 1.2, host=%s node_id=%d", c.APIHost, c.NodeID)
+		transport, terr := client.Transport()
+		if terr != nil {
+			return nil, fmt.Errorf("panel http transport: %w", terr)
+		}
+		transport.TLSClientConfig = &tls.Config{MaxVersion: maxVer}
+		// This path often completes the first TLS 1.2 handshake, then hangs on
+		// reused HTTP/2 connections. Force HTTP/1.1 and no keep-alive.
+		transport.ForceAttemptHTTP2 = false
+		transport.TLSNextProto = make(map[string]func(authority string, conn *tls.Conn) http.RoundTripper)
+		transport.DisableKeepAlives = true
+		logrus.Infof("panel HTTPS client forcing TLS 1.2 + HTTP/1.1, host=%s node_id=%d", c.APIHost, c.NodeID)
 	}
 	// Check node type
 	c.NodeType = strings.ToLower(c.NodeType)

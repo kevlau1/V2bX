@@ -40,4 +40,7 @@ func TestNew_TLSMaxVersion12(t *testing.T) {
 	if tr.TLSClientConfig == nil || tr.TLSClientConfig.MaxVersion != tls.VersionTLS12 {
 		t.Fatalf("TLS MaxVersion: %+v", tr.TLSClientConfig)
 	}
+	if tr.ForceAttemptHTTP2 || tr.DisableKeepAlives != true {
+		t.Fatalf("expected HTTP/1.1 without keep-alive, ForceAttemptHTTP2=%v DisableKeepAlives=%v", tr.ForceAttemptHTTP2, tr.DisableKeepAlives)
+	}
 }
